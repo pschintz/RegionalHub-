@@ -26,6 +26,7 @@
     .modal.open { display: flex; }
     .modal-content { background: white; border-radius: 16px; padding: 20px; max-width: 380px; width: 100%; }
     .link { font-size: 12px; color: #4f46e5; margin-right: 8px; text-decoration: none; }
+    .maps-btn { display: inline-block; background: #eef2ff; color: #4f46e5; padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -162,11 +163,17 @@
             <label>City / Office</label>
             <input list="officeList" value="${data.city}" onchange="updateField('${key}','city',this.value)" placeholder="e.g. Charlotte">
             <label>Office Address</label>
-            <input value="${data.officeAddress}" onchange="updateField('${key}','officeAddress',this.value)" placeholder="Street address">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input style="flex:1;" value="${data.officeAddress}" onchange="updateField('${key}','officeAddress',this.value)" placeholder="Street address">
+              ${data.officeAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank">Maps</a>`:''}
+            </div>
             <label>Hotel</label>
             <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="e.g. Courtyard">
             <label>Hotel Address</label>
-            <input value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input style="flex:1;" value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
+              ${data.hotelAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.hotelAddress)}" target="_blank">Maps</a>`:''}
+            </div>
           </div>
           <div id="exp-${key}" class="expand">
             <div style="display:flex;gap:6px;margin-bottom:12px;font-size:12px;">
@@ -176,8 +183,7 @@
             </div>
             ${lastVisits.length?`<div style="font-size:12px;color:#64748b;margin-bottom:8px;">Last visits: ${lastVisits.map(d=>formatDate(new Date(d+'T12:00:00'))).join(', ')}</div>`:''}
             ${data.city?`<div style="margin-bottom:8px;"><a class="link" href="https://www.google.com/search?q=restaurants+near+${encodeURIComponent(data.city)}" target="_blank">Restaurants</a><a class="link" href="https://www.google.com/search?q=bbq+near+${encodeURIComponent(data.city)}" target="_blank">BBQ</a><a class="link" href="https://www.google.com/search?q=breweries+near+${encodeURIComponent(data.city)}" target="_blank">Breweries</a></div>`:''}
-            ${data.officeAddress?`<a class="link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank">Office Maps</a>`:''}
-            ${prevHotel&&data.officeAddress?`<br><a class="link" href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotel)}&destination=${encodeURIComponent(data.officeAddress)}" target="_blank">Directions from previous hotel</a>`:''}
+            ${prevHotel&&data.officeAddress?`<a class="link" href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotel)}&destination=${encodeURIComponent(data.officeAddress)}" target="_blank">Directions from previous hotel</a>`:''}
           </div>
         `;
         container.appendChild(card);
@@ -188,14 +194,37 @@
     function updateField(key,field,value){
       if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status:'open'};
       trips[key][field]=value;
+
       if(field==='city'){
         const match=merrillOffices.find(o=>o.city.toLowerCase()===value.toLowerCase()||o.name.toLowerCase().includes(value.toLowerCase()));
-        if(match){trips[key].officeAddress=match.address;trips[key].phone=match.phone;trips[key].city=match.city;}
-        if(preferredHotels[value.toLowerCase()]){trips[key].hotel=preferredHotels[value.toLowerCase()].name;trips[key].hotelAddress=preferredHotels[value.toLowerCase()].address;}
+        if(match){
+          trips[key].officeAddress=match.address;
+          trips[key].phone=match.phone;
+          trips[key].city=match.city;
+        }
+        const pref=preferredHotels[value.toLowerCase()];
+        if(pref){
+          trips[key].hotel=pref.name||'';
+          trips[key].hotelAddress=pref.address||'';
+        }
       }
-      if(field==='hotel'&&trips[key].city) preferredHotels[trips[key].city.toLowerCase()]={name:value,address:trips[key].hotelAddress};
+
+      if(field==='hotel'&&trips[key].city){
+        preferredHotels[trips[key].city.toLowerCase()]={
+          name:value,
+          address:trips[key].hotelAddress||''
+        };
+      }
+      if(field==='hotelAddress'&&trips[key].city&&trips[key].hotel){
+        preferredHotels[trips[key].city.toLowerCase()]={
+          name:trips[key].hotel,
+          address:value
+        };
+      }
+
       if(trips[key].city||trips[key].hotel) trips[key].status='visit';
-      saveAll();renderWeek();
+      saveAll();
+      renderWeek();
     }
 
     function setStatus(key,status){
@@ -210,6 +239,7 @@
       if(!list){list=document.createElement('datalist');list.id='officeList';document.body.appendChild(list);}
       const offices=[...new Set([...merrillOffices.map(o=>o.city),...Object.values(trips).map(t=>t.city).filter(Boolean)])];
       list.innerHTML=offices.map(c=>`<option value="${c}">`).join('');
+
       let hlist=document.getElementById('hotelList');
       if(!hlist){hlist=document.createElement('datalist');hlist.id='hotelList';document.body.appendChild(hlist);}
       const hotels=[...new Set(Object.values(trips).map(t=>t.hotel).filter(Boolean))];
