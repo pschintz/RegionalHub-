@@ -12,8 +12,8 @@
     .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
     .card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
     .card-body { padding: 0 16px 16px; }
-    input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 4px; font-size: 14px; }
-    label { font-size: 12px; color: #64748b; }
+    input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 4px; font-size: 14px; }
+    label { font-size: 12px; color: #64748b; display: block; margin-top: 8px; }
     .btn { background: #4f46e5; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
     .btn-light { background: white; color: #4f46e5; border: 1px solid #c7d2fe; }
     .expand { display: none; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; }
@@ -21,10 +21,11 @@
     .week-nav { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; }
     .calendar { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-    .cal-day { padding: 8px 4px; border-radius: 6px; font-size: 13px; }
+    .cal-day { padding: 8px 4px; border-radius: 6px; font-size: 13px; cursor: pointer; }
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
     .modal.open { display: flex; }
     .modal-content { background: white; border-radius: 16px; padding: 20px; max-width: 380px; width: 100%; }
+    .link { font-size: 12px; color: #4f46e5; margin-right: 8px; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -33,7 +34,7 @@
     <div style="max-width:480px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;">
       <div>
         <div style="font-weight:700;font-size:18px;">Regional Hub</div>
-        <div style="font-size:12px;opacity:0.8;">Travel Planner</div>
+        <div style="font-size:12px;opacity:0.8;">NC • SC • GA</div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-light" onclick="toggleCalendar()">Calendar</button>
@@ -92,13 +93,18 @@
     const merrillOffices = [
       {city:"Charlotte",state:"NC",name:"Charlotte-Ballantyne",address:"13510 Ballantyne Corporate Pl, Charlotte, NC 28277",phone:"704.341.5100"},
       {city:"Charlotte",state:"NC",name:"Charlotte Uptown",address:"620 S Tryon St, Charlotte, NC 28255",phone:"704.339.2000"},
-      {city:"Raleigh",state:"NC",name:"Raleigh",address:"4140 Parklake Ave, Raleigh, NC 27612",phone:"919.571.6600"},
+      {city:"Charlotte",state:"NC",name:"Charlotte Fairview",address:"6000 Fairview Rd, Charlotte, NC 28210",phone:"980.282.1700"},
+      {city:"Raleigh",state:"NC",name:"Raleigh",address:"4242 Six Forks Rd, Raleigh, NC 27609",phone:"919.829.2000"},
+      {city:"Greensboro",state:"NC",name:"Greensboro",address:"800 Green Valley Rd, Suite 400, Greensboro, NC 27408",phone:"336.574.8200"},
+      {city:"Winston-Salem",state:"NC",name:"Winston-Salem",address:"380 Knollwood St, Winston-Salem, NC 27103",phone:"336.721.3200"},
       {city:"Columbia",state:"SC",name:"Columbia",address:"1333 Main St, Columbia, SC 29201",phone:"803.343.6100"},
       {city:"Charleston",state:"SC",name:"Charleston",address:"17 Lockwood Dr, Charleston, SC 29401",phone:"843.579.6100"},
+      {city:"Greenville",state:"SC",name:"Greenville",address:"55 Beattie Pl, Greenville, SC 29601",phone:"864.239.2400"},
+      {city:"Myrtle Beach",state:"SC",name:"Myrtle Beach",address:"2024 Corporate Centre Dr, Myrtle Beach, SC 29577",phone:"843.946.2000"},
       {city:"Atlanta",state:"GA",name:"Atlanta Buckhead",address:"3455 Peachtree Rd NE, Atlanta, GA 30326",phone:"404.264.1000"},
       {city:"Alpharetta",state:"GA",name:"Alpharetta",address:"10000 Avalon Blvd, Alpharetta, GA 30009",phone:"770.360.6000"},
-      {city:"New York",state:"NY",name:"Park Avenue",address:"One Bryant Park, New York, NY 10036",phone:"212.338.6000"},
-      {city:"Chicago",state:"IL",name:"Chicago Loop",address:"110 N Wacker Dr, Chicago, IL 60606",phone:"312.696.7500"}
+      {city:"Duluth",state:"GA",name:"Duluth",address:"2170 Satellite Blvd, Duluth, GA 30097",phone:"678.474.1800"},
+      {city:"Gainesville",state:"GA",name:"Gainesville",address:"340 Jesse Jewell Pkwy SE, Gainesville, GA 30501",phone:"770.287.1800"}
     ];
 
     function getMonday(d){d=new Date(d);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff));}
@@ -117,6 +123,13 @@
       return trips[key];
     }
 
+    function getLastVisits(city){
+      if(!city) return [];
+      return Object.entries(trips)
+        .filter(([k,v])=>v.city&&v.city.toLowerCase()===city.toLowerCase()&&v.status!=='off')
+        .map(([k])=>k).sort().slice(-5).reverse();
+    }
+
     function renderWeek(){
       const container=document.getElementById('daysContainer');
       container.innerHTML='';
@@ -130,6 +143,13 @@
         const data=getDayData(date);
         const key=dateKey(date);
         const todayLabel=isToday(date)?' <span style="color:#4f46e5;">(Today)</span>':'';
+        const lastVisits=getLastVisits(data.city);
+
+        let prevHotel='';
+        if(i>0){
+          const prev=new Date(currentMonday);prev.setDate(prev.getDate()+i-1);
+          prevHotel=getDayData(prev).hotelAddress||'';
+        }
 
         const card=document.createElement('div');
         card.className='card';
@@ -141,11 +161,11 @@
           <div class="card-body">
             <label>City / Office</label>
             <input list="officeList" value="${data.city}" onchange="updateField('${key}','city',this.value)" placeholder="e.g. Charlotte">
-            <label style="margin-top:8px;display:block;">Office Address</label>
+            <label>Office Address</label>
             <input value="${data.officeAddress}" onchange="updateField('${key}','officeAddress',this.value)" placeholder="Street address">
-            <label style="margin-top:8px;display:block;">Hotel</label>
-            <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="e.g. The Dunhill">
-            <label style="margin-top:8px;display:block;">Hotel Address</label>
+            <label>Hotel</label>
+            <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="e.g. Courtyard">
+            <label>Hotel Address</label>
             <input value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
           </div>
           <div id="exp-${key}" class="expand">
@@ -154,8 +174,10 @@
               <button onclick="setStatus('${key}','visit')" style="padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0;${data.status==='visit'?'background:#bbf7d0':''}">Visit</button>
               <button onclick="setStatus('${key}','off')" style="padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0;${data.status==='off'?'background:#bfdbfe':''}">Off</button>
             </div>
-            ${data.city?`<div style="margin-bottom:8px;"><a href="https://www.google.com/search?q=restaurants+near+${encodeURIComponent(data.city)}" target="_blank" style="margin-right:6px;font-size:12px;color:#4f46e5;">Restaurants</a><a href="https://www.google.com/search?q=bbq+near+${encodeURIComponent(data.city)}" target="_blank" style="margin-right:6px;font-size:12px;color:#4f46e5;">BBQ</a><a href="https://www.google.com/search?q=breweries+near+${encodeURIComponent(data.city)}" target="_blank" style="font-size:12px;color:#4f46e5;">Breweries</a></div>`:''}
-            ${data.officeAddress?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank" style="font-size:12px;color:#4f46e5;">Office Maps</a>`:''}
+            ${lastVisits.length?`<div style="font-size:12px;color:#64748b;margin-bottom:8px;">Last visits: ${lastVisits.map(d=>formatDate(new Date(d+'T12:00:00'))).join(', ')}</div>`:''}
+            ${data.city?`<div style="margin-bottom:8px;"><a class="link" href="https://www.google.com/search?q=restaurants+near+${encodeURIComponent(data.city)}" target="_blank">Restaurants</a><a class="link" href="https://www.google.com/search?q=bbq+near+${encodeURIComponent(data.city)}" target="_blank">BBQ</a><a class="link" href="https://www.google.com/search?q=breweries+near+${encodeURIComponent(data.city)}" target="_blank">Breweries</a></div>`:''}
+            ${data.officeAddress?`<a class="link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank">Office Maps</a>`:''}
+            ${prevHotel&&data.officeAddress?`<br><a class="link" href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotel)}&destination=${encodeURIComponent(data.officeAddress)}" target="_blank">Directions from previous hotel</a>`:''}
           </div>
         `;
         container.appendChild(card);
