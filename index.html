@@ -24,53 +24,28 @@
     </div>
   </header>
 
-  <main class="max-w-lg mx-auto p-4 space-y-6 pb-24">
+  <main class="max-w-lg mx-auto p-4 space-y-5 pb-28">
 
-    <!-- Current Trip -->
-    <section>
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="font-semibold text-slate-700">This Week</h2>
-        <button onclick="alert('Trip editor coming in next version')" class="text-sm text-indigo-600 font-medium">Edit Trip</button>
+    <!-- Week Navigation -->
+    <div class="flex items-center justify-between bg-white rounded-xl p-3 shadow-sm border">
+      <button onclick="changeWeek(-1)" class="text-indigo-600 font-medium px-3 py-1">← Prev</button>
+      <div class="text-center">
+        <div class="font-semibold" id="weekLabel">This Week</div>
+        <div class="text-xs text-slate-500" id="weekRange"></div>
       </div>
+      <button onclick="changeWeek(1)" class="text-indigo-600 font-medium px-3 py-1">Next →</button>
+    </div>
 
-      <!-- Example day cards (these will become dynamic later) -->
-      <div class="space-y-4" id="tripDays">
-        <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
-          <div class="font-medium text-indigo-700 mb-2">Mon • Charlotte</div>
-          <div class="text-sm space-y-1">
-            <div>🏢 Office: <span class="text-slate-600">Add your office</span></div>
-            <div>🏨 Hotel: <span class="text-slate-600">Add your hotel</span></div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
-          <div class="font-medium text-indigo-700 mb-2">Tue • Columbia</div>
-          <div class="text-sm space-y-1">
-            <div>🏢 Office: <span class="text-slate-600">Add your office</span></div>
-            <div>🏨 Hotel: <span class="text-slate-600">Add your hotel</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- My Offices -->
-    <section>
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="font-semibold text-slate-700">My Offices</h2>
-        <button onclick="addOffice()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg">+ Add</button>
-      </div>
-      <div id="officesList" class="space-y-2 text-sm text-slate-600">
-        <p class="text-slate-400">No offices added yet</p>
-      </div>
-    </section>
+    <!-- Days -->
+    <div id="daysContainer" class="space-y-4"></div>
 
   </main>
 
   <!-- Summary Modal -->
   <div id="summaryModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-xl">
-      <h3 class="font-bold text-lg mb-3">Travel Summary</h3>
-      <pre id="summaryText" class="text-sm bg-slate-50 p-3 rounded-lg mb-4 whitespace-pre-wrap"></pre>
+      <h3 class="font-bold text-lg mb-3">Week Summary</h3>
+      <pre id="summaryText" class="text-sm bg-slate-50 p-3 rounded-lg mb-4 whitespace-pre-wrap max-h-64 overflow-y-auto"></pre>
       <div class="flex gap-2">
         <button onclick="copySummary()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg font-medium">Copy</button>
         <button onclick="hideSummary()" class="flex-1 bg-slate-200 py-2.5 rounded-lg font-medium">Close</button>
@@ -79,59 +54,242 @@
   </div>
 
   <script>
-    // ----- Simple data storage -----
-    let offices = JSON.parse(localStorage.getItem('offices') || '[]');
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let currentMonday = getMonday(new Date());
 
-    function saveOffices() {
-      localStorage.setItem('offices', JSON.stringify(offices));
-      renderOffices();
+    // ----- Helpers -----
+    function getMonday(d) {
+      d = new Date(d);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
     }
 
-    function renderOffices() {
-      const list = document.getElementById('officesList');
-      if (offices.length === 0) {
-        list.innerHTML = '<p class="text-slate-400">No offices added yet</p>';
-        return;
-      }
-      list.innerHTML = offices.map((o, i) => `
-        <div class="bg-white p-3 rounded-lg border flex justify-between items-center">
-          <div>
-            <div class="font-medium">${o.city}</div>
-            <div class="text-xs text-slate-500">${o.name || ''}</div>
-          </div>
-          <button onclick="removeOffice(${i})" class="text-red-500 text-xs">Remove</button>
-        </div>
-      `).join('');
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
-    function addOffice() {
-      const city = prompt('City (e.g. Charlotte):');
+    function dateKey(date) {
+      return date.toISOString().split('T')[0];
+    }
+
+    function isToday(date) {
+      const today = new Date();
+      return dateKey(date) === dateKey(today);
+    }
+
+    // ----- Data -----
+    let trips = JSON.parse(localStorage.getItem('trips') || '{}');
+    let savedOffices = JSON.parse(localStorage.getItem('savedOffices') || '[]');
+    let savedHotels = JSON.parse(localStorage.getItem('savedHotels') || '[]');
+
+    function saveAll() {
+      localStorage.setItem('trips', JSON.stringify(trips));
+      localStorage.setItem('savedOffices', JSON.stringify(savedOffices));
+      localStorage.setItem('savedHotels', JSON.stringify(savedHotels));
+    }
+
+    function getDayData(date) {
+      const key = dateKey(date);
+      if (!trips[key]) trips[key] = { city: '', officeAddress: '', hotel: '', hotelAddress: '' };
+      return trips[key];
+    }
+
+    function rememberOffice(city, address) {
       if (!city) return;
-      const name = prompt('Office name or address (optional):') || '';
-      offices.push({ city, name });
-      saveOffices();
-    }
-
-    function removeOffice(index) {
-      if (confirm('Remove this office?')) {
-        offices.splice(index, 1);
-        saveOffices();
+      const exists = savedOffices.find(o => o.city.toLowerCase() === city.toLowerCase());
+      if (exists) {
+        if (address) exists.address = address;
+      } else {
+        savedOffices.push({ city, address: address || '' });
       }
     }
 
-    // ----- Text to Wife Summary -----
+    function rememberHotel(name, address) {
+      if (!name) return;
+      const exists = savedHotels.find(h => h.name.toLowerCase() === name.toLowerCase());
+      if (exists) {
+        if (address) exists.address = address;
+      } else {
+        savedHotels.push({ name, address: address || '' });
+      }
+    }
+
+    // ----- Render -----
+    function renderWeek() {
+      const container = document.getElementById('daysContainer');
+      container.innerHTML = '';
+
+      const start = new Date(currentMonday);
+      const end = new Date(currentMonday);
+      end.setDate(end.getDate() + 6);
+
+      document.getElementById('weekRange').textContent = `${formatDate(start)} – ${formatDate(end)}`;
+
+      const today = new Date();
+      const thisMonday = getMonday(today);
+      document.getElementById('weekLabel').textContent = 
+        dateKey(currentMonday) === dateKey(thisMonday) ? 'This Week' : 'Selected Week';
+
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(currentMonday);
+        date.setDate(date.getDate() + i);
+        const data = getDayData(date);
+        const key = dateKey(date);
+        const dayName = dayNames[date.getDay()];
+        const dateStr = formatDate(date);
+        const todayLabel = isToday(date) ? ' <span class="text-indigo-600 font-normal">(Today)</span>' : '';
+
+        // Previous day hotel for directions
+        let prevHotelAddress = '';
+        if (i > 0) {
+          const prevDate = new Date(currentMonday);
+          prevDate.setDate(prevDate.getDate() + i - 1);
+          prevHotelAddress = getDayData(prevDate).hotelAddress || '';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 p-4';
+        card.innerHTML = `
+          <div class="font-medium text-indigo-700 mb-3">${dayName}, ${dateStr}${todayLabel}</div>
+
+          <div class="space-y-3 text-sm">
+            <!-- City / Office -->
+            <div>
+              <label class="text-xs text-slate-500">City / Office</label>
+              <input list="officeSuggestions" type="text" value="${data.city}"
+                     onchange="updateField('${key}', 'city', this.value)"
+                     placeholder="e.g. Charlotte"
+                     class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+              <label class="text-xs text-slate-500">Office Address</label>
+              <div class="flex gap-2 mt-1">
+                <input type="text" value="${data.officeAddress}"
+                       onchange="updateField('${key}', 'officeAddress', this.value)"
+                       placeholder="Street address"
+                       class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                ${data.officeAddress ? `
+                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" 
+                     target="_blank"
+                     class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-xs font-medium flex items-center">Maps</a>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Hotel -->
+            <div>
+              <label class="text-xs text-slate-500">Hotel</label>
+              <input list="hotelSuggestions" type="text" value="${data.hotel}"
+                     onchange="updateField('${key}', 'hotel', this.value)"
+                     placeholder="e.g. The Dunhill"
+                     class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+              <label class="text-xs text-slate-500">Hotel Address</label>
+              <div class="flex gap-2 mt-1">
+                <input type="text" value="${data.hotelAddress}"
+                       onchange="updateField('${key}', 'hotelAddress', this.value)"
+                       placeholder="Street address"
+                       class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                ${data.hotelAddress ? `
+                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.hotelAddress)}" 
+                     target="_blank"
+                     class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-xs font-medium flex items-center">Maps</a>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Directions from previous hotel -->
+            ${prevHotelAddress && data.officeAddress ? `
+              <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotelAddress)}&destination=${encodeURIComponent(data.officeAddress)}" 
+                 target="_blank"
+                 class="block text-center bg-emerald-50 text-emerald-700 border border-emerald-200 py-2 rounded-lg text-sm font-medium mt-1">
+                Directions from previous hotel
+              </a>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      }
+
+      // Update suggestion lists
+      updateSuggestions();
+    }
+
+    function updateField(key, field, value) {
+      if (!trips[key]) trips[key] = { city: '', officeAddress: '', hotel: '', hotelAddress: '' };
+      trips[key][field] = value;
+
+      // Remember for suggestions
+      if (field === 'city' || field === 'officeAddress') {
+        rememberOffice(trips[key].city, trips[key].officeAddress);
+      }
+      if (field === 'hotel' || field === 'hotelAddress') {
+        rememberHotel(trips[key].hotel, trips[key].hotelAddress);
+      }
+
+      saveAll();
+      renderWeek(); // re-render to show/hide Maps buttons
+    }
+
+    function updateSuggestions() {
+      // Office suggestions
+      let officeList = document.getElementById('officeSuggestions');
+      if (!officeList) {
+        officeList = document.createElement('datalist');
+        officeList.id = 'officeSuggestions';
+        document.body.appendChild(officeList);
+      }
+      officeList.innerHTML = savedOffices.map(o => 
+        `<option value="${o.city}">${o.address ? o.address : ''}</option>`
+      ).join('');
+
+      // Hotel suggestions
+      let hotelList = document.getElementById('hotelSuggestions');
+      if (!hotelList) {
+        hotelList = document.createElement('datalist');
+        hotelList.id = 'hotelSuggestions';
+        document.body.appendChild(hotelList);
+      }
+      hotelList.innerHTML = savedHotels.map(h => 
+        `<option value="${h.name}">${h.address ? h.address : ''}</option>`
+      ).join('');
+    }
+
+    function changeWeek(offset) {
+      currentMonday.setDate(currentMonday.getDate() + (offset * 7));
+      renderWeek();
+    }
+
+    // ----- Export -----
     function showSummary() {
-      const text = `Travel this week:
+      let text = 'Travel this week:\n\n';
+      let hasData = false;
 
-Mon – Charlotte
-Hotel: (add later)
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(currentMonday);
+        date.setDate(date.getDate() + i);
+        const data = getDayData(date);
+        const dayName = dayNames[date.getDay()];
+        const dateStr = formatDate(date);
 
-Tue – Columbia
-Hotel: (add later)
+        if (data.city || data.hotel) {
+          hasData = true;
+          text += `${dayName}, ${dateStr}`;
+          if (data.city) text += ` – ${data.city}`;
+          text += '\n';
+          if (data.hotel) text += `Hotel: ${data.hotel}\n`;
+          if (data.hotelAddress) text += `${data.hotelAddress}\n`;
+          text += '\n';
+        }
+      }
 
-(More days coming soon)`;
+      if (!hasData) text = 'No travel details entered for this week yet.';
 
-      document.getElementById('summaryText').textContent = text;
+      document.getElementById('summaryText').textContent = text.trim();
       document.getElementById('summaryModal').classList.remove('hidden');
       document.getElementById('summaryModal').classList.add('flex');
     }
@@ -148,8 +306,8 @@ Hotel: (add later)
       });
     }
 
-    // Initial render
-    renderOffices();
+    // Start
+    renderWeek();
   </script>
 </body>
 </html>
