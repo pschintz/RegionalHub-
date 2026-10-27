@@ -144,12 +144,6 @@
         .map(([k])=>k).sort().slice(-5).reverse();
     }
 
-    function savePreferredHotel(city, name, address){
-      if(!city) return;
-      preferredHotels[city.toLowerCase()] = { name: name || '', address: address || '' };
-      saveAll();
-    }
-
     function renderWeek(){
       const container=document.getElementById('daysContainer');
       container.innerHTML='';
@@ -180,14 +174,14 @@
           </div>
           <div class="card-body">
             <label>City / Office</label>
-            <input list="officeList" value="${data.city}" onchange="updateField('${key}','city',this.value)" placeholder="Type city or office name">
+            <input list="officeList" value="${data.city}" onchange="updateField('${key}','city',this.value)" placeholder="Start typing city">
             <label>Office Address</label>
             <div style="display:flex;gap:6px;align-items:center;">
               <input style="flex:1;" value="${data.officeAddress}" onchange="updateField('${key}','officeAddress',this.value)" placeholder="Street address">
               ${data.officeAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank">Maps</a>`:''}
             </div>
             <label>Hotel</label>
-            <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="e.g. Courtyard">
+            <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="Hotel name">
             <label>Hotel Address</label>
             <div style="display:flex;gap:6px;align-items:center;">
               <input style="flex:1;" value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
@@ -224,15 +218,21 @@
           trips[key].phone = match.phone;
           trips[key].city = match.city;
         }
-        const pref = preferredHotels[value.toLowerCase()];
+        // Restore preferred hotel
+        const cityKey = (trips[key].city || value).toLowerCase();
+        const pref = preferredHotels[cityKey];
         if(pref){
           trips[key].hotel = pref.name || '';
           trips[key].hotelAddress = pref.address || '';
         }
       }
 
+      // Always save preferred hotel when hotel name or address changes and city exists
       if((field==='hotel' || field==='hotelAddress') && trips[key].city){
-        savePreferredHotel(trips[key].city, trips[key].hotel, trips[key].hotelAddress);
+        preferredHotels[trips[key].city.toLowerCase()] = {
+          name: trips[key].hotel || '',
+          address: trips[key].hotelAddress || ''
+        };
       }
 
       if(trips[key].city || trips[key].hotel) trips[key].status='visit';
@@ -253,7 +253,7 @@
     function updateDatalists(){
       let list=document.getElementById('officeList');
       if(!list){list=document.createElement('datalist');list.id='officeList';document.body.appendChild(list);}
-      const offices=[...new Set([...merrillOffices.map(o=>o.city),...Object.values(trips).map(t=>t.city).filter(Boolean)])];
+      const offices=[...new Set(merrillOffices.map(o=>o.city))];
       list.innerHTML=offices.map(c=>`<option value="${c}">`).join('');
 
       let hlist=document.getElementById('hotelList');
