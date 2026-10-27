@@ -1,304 +1,252 @@
-t-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Regional Hub</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f1f5f9; color: #1e2937; }
+    header { background: #4338ca; color: white; padding: 16px; position: sticky; top: 0; z-index: 50; }
+    .container { max-width: 480px; margin: 0 auto; padding: 16px 16px 100px; }
+    .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
+    .card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .card-body { padding: 0 16px 16px; }
+    input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 4px; font-size: 14px; }
+    label { font-size: 12px; color: #64748b; }
+    .btn { background: #4f46e5; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
+    .btn-light { background: white; color: #4f46e5; border: 1px solid #c7d2fe; }
+    .expand { display: none; background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; }
+    .expand.open { display: block; }
+    .week-nav { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; }
+    .calendar { background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #e2e8f0; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .cal-day { padding: 8px 4px; border-radius: 6px; font-size: 13px; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+    .modal.open { display: flex; }
+    .modal-content { background: white; border-radius: 16px; padding: 20px; max-width: 380px; width: 100%; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen">
+<body>
 
-  <!-- Header -->
-  <header class="bg-indigo-700 text-white p-4 sticky top-0 z-50 shadow">
-    <div class="max-w-lg mx-auto flex justify-between items-center">
+  <header>
+    <div style="max-width:480px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <h1 class="text-lg font-bold">Regional Hub</h1>
-        <p class="text-xs text-indigo-200">GA • SC • NC</p>
+        <div style="font-weight:700;font-size:18px;">Regional Hub</div>
+        <div style="font-size:12px;opacity:0.8;">Travel Planner</div>
       </div>
-      <button onclick="showSummary()" class="bg-white text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg">
-        Export Week
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-light" onclick="toggleCalendar()">Calendar</button>
+        <button class="btn btn-light" onclick="showSummary()">Export Week</button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-lg mx-auto p-4 space-y-5 pb-28">
+  <div class="container">
 
-    <!-- Week Navigation -->
-    <div class="flex items-center justify-between bg-white rounded-xl p-3 shadow-sm border">
-      <button onclick="changeWeek(-1)" class="text-indigo-600 font-medium px-3 py-1">← Prev</button>
-      <div class="text-center">
-        <div class="font-semibold" id="weekLabel">This Week</div>
-        <div class="text-xs text-slate-500" id="weekRange"></div>
+    <div id="calendarView" class="calendar" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <button class="btn btn-light" onclick="changeMonth(-1)">←</button>
+        <strong id="calendarTitle"></strong>
+        <button class="btn btn-light" onclick="changeMonth(1)">→</button>
       </div>
-      <button onclick="changeWeek(1)" class="text-indigo-600 font-medium px-3 py-1">Next →</button>
+      <div class="cal-grid" style="font-size:12px;color:#64748b;margin-bottom:4px;">
+        <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+      </div>
+      <div id="calendarDays" class="cal-grid"></div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:12px;">
+        <span><span style="display:inline-block;width:12px;height:12px;background:#bbf7d0;border-radius:3px;"></span> Visit</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#fed7aa;border-radius:3px;"></span> Open</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#bfdbfe;border-radius:3px;"></span> Off</span>
+      </div>
     </div>
 
-    <!-- Days -->
-    <div id="daysContainer" class="space-y-4"></div>
+    <div class="week-nav">
+      <button class="btn btn-light" onclick="changeWeek(-1)">← Prev</button>
+      <div style="text-align:center;">
+        <div style="font-weight:600;" id="weekLabel">This Week</div>
+        <div style="font-size:12px;color:#64748b;" id="weekRange"></div>
+      </div>
+      <button class="btn btn-light" onclick="changeWeek(1)">Next →</button>
+    </div>
 
-  </main>
+    <div id="daysContainer"></div>
+  </div>
 
-  <!-- Summary Modal -->
-  <div id="summaryModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-xl">
-      <h3 class="font-bold text-lg mb-3">Week Summary</h3>
-      <pre id="summaryText" class="text-sm bg-slate-50 p-3 rounded-lg mb-4 whitespace-pre-wrap max-h-64 overflow-y-auto"></pre>
-      <div class="flex gap-2">
-        <button onclick="copySummary()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg font-medium">Copy</button>
-        <button onclick="hideSummary()" class="flex-1 bg-slate-200 py-2.5 rounded-lg font-medium">Close</button>
+  <div id="summaryModal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin:0 0 12px;">Week Summary</h3>
+      <pre id="summaryText" style="background:#f8fafc;padding:12px;border-radius:8px;font-size:13px;white-space:pre-wrap;max-height:240px;overflow:auto;"></pre>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn" style="flex:1;" onclick="copySummary()">Copy</button>
+        <button class="btn btn-light" style="flex:1;" onclick="hideSummary()">Close</button>
       </div>
     </div>
   </div>
 
   <script>
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     let currentMonday = getMonday(new Date());
+    let calendarDate = new Date();
 
-    // ----- Helpers -----
-    function getMonday(d) {
-      d = new Date(d);
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-      return new Date(d.setDate(diff));
-    }
+    const merrillOffices = [
+      {city:"Charlotte",state:"NC",name:"Charlotte-Ballantyne",address:"13510 Ballantyne Corporate Pl, Charlotte, NC 28277",phone:"704.341.5100"},
+      {city:"Charlotte",state:"NC",name:"Charlotte Uptown",address:"620 S Tryon St, Charlotte, NC 28255",phone:"704.339.2000"},
+      {city:"Raleigh",state:"NC",name:"Raleigh",address:"4140 Parklake Ave, Raleigh, NC 27612",phone:"919.571.6600"},
+      {city:"Columbia",state:"SC",name:"Columbia",address:"1333 Main St, Columbia, SC 29201",phone:"803.343.6100"},
+      {city:"Charleston",state:"SC",name:"Charleston",address:"17 Lockwood Dr, Charleston, SC 29401",phone:"843.579.6100"},
+      {city:"Atlanta",state:"GA",name:"Atlanta Buckhead",address:"3455 Peachtree Rd NE, Atlanta, GA 30326",phone:"404.264.1000"},
+      {city:"Alpharetta",state:"GA",name:"Alpharetta",address:"10000 Avalon Blvd, Alpharetta, GA 30009",phone:"770.360.6000"},
+      {city:"New York",state:"NY",name:"Park Avenue",address:"One Bryant Park, New York, NY 10036",phone:"212.338.6000"},
+      {city:"Chicago",state:"IL",name:"Chicago Loop",address:"110 N Wacker Dr, Chicago, IL 60606",phone:"312.696.7500"}
+    ];
 
-    function formatDate(date) {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
+    function getMonday(d){d=new Date(d);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff));}
+    function formatDate(date){return date.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+    function dateKey(date){return date.toISOString().split('T')[0];}
+    function isToday(date){return dateKey(date)===dateKey(new Date());}
 
-    function dateKey(date) {
-      return date.toISOString().split('T')[0];
-    }
+    let trips = JSON.parse(localStorage.getItem('trips')||'{}');
+    let preferredHotels = JSON.parse(localStorage.getItem('preferredHotels')||'{}');
 
-    function isToday(date) {
-      const today = new Date();
-      return dateKey(date) === dateKey(today);
-    }
+    function saveAll(){localStorage.setItem('trips',JSON.stringify(trips));localStorage.setItem('preferredHotels',JSON.stringify(preferredHotels));}
 
-    // ----- Data -----
-    let trips = JSON.parse(localStorage.getItem('trips') || '{}');
-    let savedOffices = JSON.parse(localStorage.getItem('savedOffices') || '[]');
-    let savedHotels = JSON.parse(localStorage.getItem('savedHotels') || '[]');
-
-    function saveAll() {
-      localStorage.setItem('trips', JSON.stringify(trips));
-      localStorage.setItem('savedOffices', JSON.stringify(savedOffices));
-      localStorage.setItem('savedHotels', JSON.stringify(savedHotels));
-    }
-
-    function getDayData(date) {
-      const key = dateKey(date);
-      if (!trips[key]) trips[key] = { city: '', officeAddress: '', hotel: '', hotelAddress: '' };
+    function getDayData(date){
+      const key=dateKey(date);
+      if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status:'open'};
       return trips[key];
     }
 
-    function rememberOffice(city, address) {
-      if (!city) return;
-      const exists = savedOffices.find(o => o.city.toLowerCase() === city.toLowerCase());
-      if (exists) {
-        if (address) exists.address = address;
-      } else {
-        savedOffices.push({ city, address: address || '' });
-      }
-    }
+    function renderWeek(){
+      const container=document.getElementById('daysContainer');
+      container.innerHTML='';
+      const start=new Date(currentMonday);
+      const end=new Date(currentMonday);end.setDate(end.getDate()+6);
+      document.getElementById('weekRange').textContent=`${formatDate(start)} – ${formatDate(end)}`;
+      document.getElementById('weekLabel').textContent=dateKey(currentMonday)===dateKey(getMonday(new Date()))?'This Week':'Selected Week';
 
-    function rememberHotel(name, address) {
-      if (!name) return;
-      const exists = savedHotels.find(h => h.name.toLowerCase() === name.toLowerCase());
-      if (exists) {
-        if (address) exists.address = address;
-      } else {
-        savedHotels.push({ name, address: address || '' });
-      }
-    }
+      for(let i=0;i<7;i++){
+        const date=new Date(currentMonday);date.setDate(date.getDate()+i);
+        const data=getDayData(date);
+        const key=dateKey(date);
+        const todayLabel=isToday(date)?' <span style="color:#4f46e5;">(Today)</span>':'';
 
-    // ----- Render -----
-    function renderWeek() {
-      const container = document.getElementById('daysContainer');
-      container.innerHTML = '';
-
-      const start = new Date(currentMonday);
-      const end = new Date(currentMonday);
-      end.setDate(end.getDate() + 6);
-
-      document.getElementById('weekRange').textContent = `${formatDate(start)} – ${formatDate(end)}`;
-
-      const today = new Date();
-      const thisMonday = getMonday(today);
-      document.getElementById('weekLabel').textContent = 
-        dateKey(currentMonday) === dateKey(thisMonday) ? 'This Week' : 'Selected Week';
-
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(currentMonday);
-        date.setDate(date.getDate() + i);
-        const data = getDayData(date);
-        const key = dateKey(date);
-        const dayName = dayNames[date.getDay()];
-        const dateStr = formatDate(date);
-        const todayLabel = isToday(date) ? ' <span class="text-indigo-600 font-normal">(Today)</span>' : '';
-
-        // Previous day hotel for directions
-        let prevHotelAddress = '';
-        if (i > 0) {
-          const prevDate = new Date(currentMonday);
-          prevDate.setDate(prevDate.getDate() + i - 1);
-          prevHotelAddress = getDayData(prevDate).hotelAddress || '';
-        }
-
-        const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 p-4';
-        card.innerHTML = `
-          <div class="font-medium text-indigo-700 mb-3">${dayName}, ${dateStr}${todayLabel}</div>
-
-          <div class="space-y-3 text-sm">
-            <!-- City / Office -->
-            <div>
-              <label class="text-xs text-slate-500">City / Office</label>
-              <input list="officeSuggestions" type="text" value="${data.city}"
-                     onchange="updateField('${key}', 'city', this.value)"
-                     placeholder="e.g. Charlotte"
-                     class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        const card=document.createElement('div');
+        card.className='card';
+        card.innerHTML=`
+          <div class="card-header">
+            <div style="font-weight:600;color:#4338ca;">${dayNames[date.getDay()]}, ${formatDate(date)}${todayLabel}</div>
+            <button onclick="toggleExpand('${key}')" style="background:none;border:none;font-size:20px;color:#94a3b8;">›</button>
+          </div>
+          <div class="card-body">
+            <label>City / Office</label>
+            <input list="officeList" value="${data.city}" onchange="updateField('${key}','city',this.value)" placeholder="e.g. Charlotte">
+            <label style="margin-top:8px;display:block;">Office Address</label>
+            <input value="${data.officeAddress}" onchange="updateField('${key}','officeAddress',this.value)" placeholder="Street address">
+            <label style="margin-top:8px;display:block;">Hotel</label>
+            <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="e.g. The Dunhill">
+            <label style="margin-top:8px;display:block;">Hotel Address</label>
+            <input value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
+          </div>
+          <div id="exp-${key}" class="expand">
+            <div style="display:flex;gap:6px;margin-bottom:12px;font-size:12px;">
+              <button onclick="setStatus('${key}','open')" style="padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0;${data.status==='open'?'background:#fed7aa':''}">Open</button>
+              <button onclick="setStatus('${key}','visit')" style="padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0;${data.status==='visit'?'background:#bbf7d0':''}">Visit</button>
+              <button onclick="setStatus('${key}','off')" style="padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0;${data.status==='off'?'background:#bfdbfe':''}">Off</button>
             </div>
-
-            <div>
-              <label class="text-xs text-slate-500">Office Address</label>
-              <div class="flex gap-2 mt-1">
-                <input type="text" value="${data.officeAddress}"
-                       onchange="updateField('${key}', 'officeAddress', this.value)"
-                       placeholder="Street address"
-                       class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                ${data.officeAddress ? `
-                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" 
-                     target="_blank"
-                     class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-xs font-medium flex items-center">Maps</a>
-                ` : ''}
-              </div>
-            </div>
-
-            <!-- Hotel -->
-            <div>
-              <label class="text-xs text-slate-500">Hotel</label>
-              <input list="hotelSuggestions" type="text" value="${data.hotel}"
-                     onchange="updateField('${key}', 'hotel', this.value)"
-                     placeholder="e.g. The Dunhill"
-                     class="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-
-            <div>
-              <label class="text-xs text-slate-500">Hotel Address</label>
-              <div class="flex gap-2 mt-1">
-                <input type="text" value="${data.hotelAddress}"
-                       onchange="updateField('${key}', 'hotelAddress', this.value)"
-                       placeholder="Street address"
-                       class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                ${data.hotelAddress ? `
-                  <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.hotelAddress)}" 
-                     target="_blank"
-                     class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-xs font-medium flex items-center">Maps</a>
-                ` : ''}
-              </div>
-            </div>
-
-            <!-- Directions from previous hotel -->
-            ${prevHotelAddress && data.officeAddress ? `
-              <a href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotelAddress)}&destination=${encodeURIComponent(data.officeAddress)}" 
-                 target="_blank"
-                 class="block text-center bg-emerald-50 text-emerald-700 border border-emerald-200 py-2 rounded-lg text-sm font-medium mt-1">
-                Directions from previous hotel
-              </a>
-            ` : ''}
+            ${data.city?`<div style="margin-bottom:8px;"><a href="https://www.google.com/search?q=restaurants+near+${encodeURIComponent(data.city)}" target="_blank" style="margin-right:6px;font-size:12px;color:#4f46e5;">Restaurants</a><a href="https://www.google.com/search?q=bbq+near+${encodeURIComponent(data.city)}" target="_blank" style="margin-right:6px;font-size:12px;color:#4f46e5;">BBQ</a><a href="https://www.google.com/search?q=breweries+near+${encodeURIComponent(data.city)}" target="_blank" style="font-size:12px;color:#4f46e5;">Breweries</a></div>`:''}
+            ${data.officeAddress?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank" style="font-size:12px;color:#4f46e5;">Office Maps</a>`:''}
           </div>
         `;
         container.appendChild(card);
       }
-
-      // Update suggestion lists
-      updateSuggestions();
+      updateDatalists();
     }
 
-    function updateField(key, field, value) {
-      if (!trips[key]) trips[key] = { city: '', officeAddress: '', hotel: '', hotelAddress: '' };
-      trips[key][field] = value;
-
-      // Remember for suggestions
-      if (field === 'city' || field === 'officeAddress') {
-        rememberOffice(trips[key].city, trips[key].officeAddress);
+    function updateField(key,field,value){
+      if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status:'open'};
+      trips[key][field]=value;
+      if(field==='city'){
+        const match=merrillOffices.find(o=>o.city.toLowerCase()===value.toLowerCase()||o.name.toLowerCase().includes(value.toLowerCase()));
+        if(match){trips[key].officeAddress=match.address;trips[key].phone=match.phone;trips[key].city=match.city;}
+        if(preferredHotels[value.toLowerCase()]){trips[key].hotel=preferredHotels[value.toLowerCase()].name;trips[key].hotelAddress=preferredHotels[value.toLowerCase()].address;}
       }
-      if (field === 'hotel' || field === 'hotelAddress') {
-        rememberHotel(trips[key].hotel, trips[key].hotelAddress);
-      }
-
-      saveAll();
-      renderWeek(); // re-render to show/hide Maps buttons
+      if(field==='hotel'&&trips[key].city) preferredHotels[trips[key].city.toLowerCase()]={name:value,address:trips[key].hotelAddress};
+      if(trips[key].city||trips[key].hotel) trips[key].status='visit';
+      saveAll();renderWeek();
     }
 
-    function updateSuggestions() {
-      // Office suggestions
-      let officeList = document.getElementById('officeSuggestions');
-      if (!officeList) {
-        officeList = document.createElement('datalist');
-        officeList.id = 'officeSuggestions';
-        document.body.appendChild(officeList);
-      }
-      officeList.innerHTML = savedOffices.map(o => 
-        `<option value="${o.city}">${o.address ? o.address : ''}</option>`
-      ).join('');
-
-      // Hotel suggestions
-      let hotelList = document.getElementById('hotelSuggestions');
-      if (!hotelList) {
-        hotelList = document.createElement('datalist');
-        hotelList.id = 'hotelSuggestions';
-        document.body.appendChild(hotelList);
-      }
-      hotelList.innerHTML = savedHotels.map(h => 
-        `<option value="${h.name}">${h.address ? h.address : ''}</option>`
-      ).join('');
+    function setStatus(key,status){
+      if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status};
+      trips[key].status=status;saveAll();renderWeek();renderCalendar();
     }
 
-    function changeWeek(offset) {
-      currentMonday.setDate(currentMonday.getDate() + (offset * 7));
+    function toggleExpand(key){document.getElementById('exp-'+key).classList.toggle('open');}
+
+    function updateDatalists(){
+      let list=document.getElementById('officeList');
+      if(!list){list=document.createElement('datalist');list.id='officeList';document.body.appendChild(list);}
+      const offices=[...new Set([...merrillOffices.map(o=>o.city),...Object.values(trips).map(t=>t.city).filter(Boolean)])];
+      list.innerHTML=offices.map(c=>`<option value="${c}">`).join('');
+      let hlist=document.getElementById('hotelList');
+      if(!hlist){hlist=document.createElement('datalist');hlist.id='hotelList';document.body.appendChild(hlist);}
+      const hotels=[...new Set(Object.values(trips).map(t=>t.hotel).filter(Boolean))];
+      hlist.innerHTML=hotels.map(h=>`<option value="${h}">`).join('');
+    }
+
+    function changeWeek(offset){currentMonday.setDate(currentMonday.getDate()+offset*7);renderWeek();}
+
+    function toggleCalendar(){
+      const el=document.getElementById('calendarView');
+      el.style.display=el.style.display==='none'?'block':'none';
+      if(el.style.display==='block') renderCalendar();
+    }
+    function changeMonth(offset){calendarDate.setMonth(calendarDate.getMonth()+offset);renderCalendar();}
+    function renderCalendar(){
+      document.getElementById('calendarTitle').textContent=calendarDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      const year=calendarDate.getFullYear(),month=calendarDate.getMonth();
+      const firstDay=new Date(year,month,1).getDay();
+      const daysInMonth=new Date(year,month+1,0).getDate();
+      let html='';
+      for(let i=0;i<firstDay;i++) html+='<div></div>';
+      for(let d=1;d<=daysInMonth;d++){
+        const date=new Date(year,month,d);
+        const key=dateKey(date);
+        const data=trips[key]||{};
+        let bg='#fed7aa';
+        if(data.status==='visit'||data.city) bg='#bbf7d0';
+        if(data.status==='off') bg='#bfdbfe';
+        html+=`<div class="cal-day" onclick="jumpToDate('${key}')" style="background:${bg};">${d}</div>`;
+      }
+      document.getElementById('calendarDays').innerHTML=html;
+    }
+    function jumpToDate(key){
+      currentMonday=getMonday(new Date(key+'T12:00:00'));
+      document.getElementById('calendarView').style.display='none';
       renderWeek();
     }
 
-    // ----- Export -----
-    function showSummary() {
-      let text = 'Travel this week:\n\n';
-      let hasData = false;
-
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(currentMonday);
-        date.setDate(date.getDate() + i);
-        const data = getDayData(date);
-        const dayName = dayNames[date.getDay()];
-        const dateStr = formatDate(date);
-
-        if (data.city || data.hotel) {
-          hasData = true;
-          text += `${dayName}, ${dateStr}`;
-          if (data.city) text += ` – ${data.city}`;
-          text += '\n';
-          if (data.hotel) text += `Hotel: ${data.hotel}\n`;
-          if (data.hotelAddress) text += `${data.hotelAddress}\n`;
-          text += '\n';
+    function showSummary(){
+      let text='Travel this week:\n\n';let has=false;
+      for(let i=0;i<7;i++){
+        const date=new Date(currentMonday);date.setDate(date.getDate()+i);
+        const data=getDayData(date);
+        if(data.city||data.hotel||data.status==='off'){
+          has=true;
+          text+=`${dayNames[date.getDay()]}, ${formatDate(date)}`;
+          if(data.status==='off') text+=' – Off';
+          else if(data.city) text+=` – ${data.city}`;
+          text+='\n';
+          if(data.hotel) text+=`Hotel: ${data.hotel}\n`;
+          text+='\n';
         }
       }
-
-      if (!hasData) text = 'No travel details entered for this week yet.';
-
-      document.getElementById('summaryText').textContent = text.trim();
-      document.getElementById('summaryModal').classList.remove('hidden');
-      document.getElementById('summaryModal').classList.add('flex');
+      document.getElementById('summaryText').textContent=has?text.trim():'No details for this week.';
+      document.getElementById('summaryModal').classList.add('open');
     }
+    function hideSummary(){document.getElementById('summaryModal').classList.remove('open');}
+    function copySummary(){navigator.clipboard.writeText(document.getElementById('summaryText').textContent).then(()=>alert('Copied'));}
 
-    function hideSummary() {
-      document.getElementById('summaryModal').classList.add('hidden');
-      document.getElementById('summaryModal').classList.remove('flex');
-    }
-
-    function copySummary() {
-      const text = document.getElementById('summaryText').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Copied! You can now paste it into Messages.');
-      });
-    }
-
-    // Start
     renderWeek();
   </script>
 </body>
