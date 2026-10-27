@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Regional Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white p-4 sticky top-0 z-50 shadow">
+    <div class="max-w-lg mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-lg font-bold">Regional Hub</h1>
+        <p class="text-xs text-indigo-200">GA • SC • NC</p>
+      </div>
+      <button onclick="showSummary()" class="bg-white text-indigo-700 text-sm font-medium px-3 py-1.5 rounded-lg">
+        Export Week
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto p-4 space-y-6 pb-24">
+
+    <!-- Current Trip -->
+    <section>
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="font-semibold text-slate-700">This Week</h2>
+        <button onclick="alert('Trip editor coming in next version')" class="text-sm text-indigo-600 font-medium">Edit Trip</button>
+      </div>
+
+      <!-- Example day cards (these will become dynamic later) -->
+      <div class="space-y-4" id="tripDays">
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+          <div class="font-medium text-indigo-700 mb-2">Mon • Charlotte</div>
+          <div class="text-sm space-y-1">
+            <div>🏢 Office: <span class="text-slate-600">Add your office</span></div>
+            <div>🏨 Hotel: <span class="text-slate-600">Add your hotel</span></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+          <div class="font-medium text-indigo-700 mb-2">Tue • Columbia</div>
+          <div class="text-sm space-y-1">
+            <div>🏢 Office: <span class="text-slate-600">Add your office</span></div>
+            <div>🏨 Hotel: <span class="text-slate-600">Add your hotel</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- My Offices -->
+    <section>
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="font-semibold text-slate-700">My Offices</h2>
+        <button onclick="addOffice()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg">+ Add</button>
+      </div>
+      <div id="officesList" class="space-y-2 text-sm text-slate-600">
+        <p class="text-slate-400">No offices added yet</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Summary Modal -->
+  <div id="summaryModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-xl">
+      <h3 class="font-bold text-lg mb-3">Travel Summary</h3>
+      <pre id="summaryText" class="text-sm bg-slate-50 p-3 rounded-lg mb-4 whitespace-pre-wrap"></pre>
+      <div class="flex gap-2">
+        <button onclick="copySummary()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg font-medium">Copy</button>
+        <button onclick="hideSummary()" class="flex-1 bg-slate-200 py-2.5 rounded-lg font-medium">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----- Simple data storage -----
+    let offices = JSON.parse(localStorage.getItem('offices') || '[]');
+
+    function saveOffices() {
+      localStorage.setItem('offices', JSON.stringify(offices));
+      renderOffices();
+    }
+
+    function renderOffices() {
+      const list = document.getElementById('officesList');
+      if (offices.length === 0) {
+        list.innerHTML = '<p class="text-slate-400">No offices added yet</p>';
+        return;
+      }
+      list.innerHTML = offices.map((o, i) => `
+        <div class="bg-white p-3 rounded-lg border flex justify-between items-center">
+          <div>
+            <div class="font-medium">${o.city}</div>
+            <div class="text-xs text-slate-500">${o.name || ''}</div>
+          </div>
+          <button onclick="removeOffice(${i})" class="text-red-500 text-xs">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    function addOffice() {
+      const city = prompt('City (e.g. Charlotte):');
+      if (!city) return;
+      const name = prompt('Office name or address (optional):') || '';
+      offices.push({ city, name });
+      saveOffices();
+    }
+
+    function removeOffice(index) {
+      if (confirm('Remove this office?')) {
+        offices.splice(index, 1);
+        saveOffices();
+      }
+    }
+
+    // ----- Text to Wife Summary -----
+    function showSummary() {
+      const text = `Travel this week:
+
+Mon – Charlotte
+Hotel: (add later)
+
+Tue – Columbia
+Hotel: (add later)
+
+(More days coming soon)`;
+
+      document.getElementById('summaryText').textContent = text;
+      document.getElementById('summaryModal').classList.remove('hidden');
+      document.getElementById('summaryModal').classList.add('flex');
+    }
+
+    function hideSummary() {
+      document.getElementById('summaryModal').classList.add('hidden');
+      document.getElementById('summaryModal').classList.remove('flex');
+    }
+
+    function copySummary() {
+      const text = document.getElementById('summaryText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied! You can now paste it into Messages.');
+      });
+    }
+
+    // Initial render
+    renderOffices();
+  </script>
+</body>
+</html>
