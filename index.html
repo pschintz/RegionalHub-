@@ -35,15 +35,18 @@
 <body>
 
   <header>
-    <div style="max-width:480px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;">
+    <div style="max-width:480px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-weight:700;font-size:18px;">Regional Hub</div>
         <div style="font-size:12px;opacity:0.8;">NC • SC • GA</div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-light" onclick="updateWeather()">Update</button>
         <button class="btn btn-light" onclick="toggleCalendar()">Calendar</button>
         <button class="btn btn-light" onclick="showSummary()">Export Week</button>
+        <button class="btn btn-light" onclick="exportAll()">Export All</button>
+        <button class="btn btn-light" onclick="document.getElementById('importFile').click()">Import</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importAll(event)">
       </div>
     </div>
   </header>
@@ -397,6 +400,44 @@
     }
     function hideSummary(){document.getElementById('summaryModal').classList.remove('open');}
     function copySummary(){navigator.clipboard.writeText(document.getElementById('summaryText').textContent).then(()=>alert('Copied'));}
+
+    function exportAll(){
+      const data = {
+        trips,
+        preferredHotels,
+        officeNotes,
+        exported: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'regional-hub-backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importAll(event){
+      const file = event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e){
+        try {
+          const data = JSON.parse(e.target.result);
+          if(data.trips) trips = data.trips;
+          if(data.preferredHotels) preferredHotels = data.preferredHotels;
+          if(data.officeNotes) officeNotes = data.officeNotes;
+          saveAll();
+          alert('Import successful');
+          renderWeek();
+          renderCalendar();
+        } catch(err){
+          alert('Import failed. Invalid file.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
 
     renderWeek();
   </script>
