@@ -173,7 +173,7 @@
         const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then(r=>r.json());
         if(!geo.results?.length) return null;
         const {latitude, longitude} = geo.results[0];
-        const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&start_date=${dateKey(date)}&end_date=${dateKey(date)}`).then(r=>r.json());
+        const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&temperature_unit=fahrenheit&start_date=${dateKey(date)}&end_date=${dateKey(date)}`).then(r=>r.json());
         if(w.daily){
           const result = {high:Math.round(w.daily.temperature_2m_max[0]), low:Math.round(w.daily.temperature_2m_min[0])};
           weatherCache[key]=result;
@@ -237,7 +237,7 @@
               <input style="flex:1;" value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
               ${data.hotelAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.hotelAddress)}" target="_blank">Maps</a>`:''}
             </div>
-            ${weather?`<div class="weather">Weather: High ${weather.high}° / Low ${weather.low}°</div>`:''}
+            ${weather?`<div class="weather">Weather: High ${weather.high}°F / Low ${weather.low}°F</div>`:''}
           </div>
           <div id="exp-${key}" class="expand">
             <div style="display:flex;gap:6px;margin-bottom:12px;font-size:12px;">
