@@ -12,7 +12,8 @@
     .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
     .card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
     .card-body { padding: 0 16px 16px; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 4px; font-size: 14px; }
+    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 4px; font-size: 14px; font-family: inherit; }
+    textarea { min-height: 60px; resize: vertical; }
     label { font-size: 12px; color: #64748b; display: block; margin-top: 8px; }
     .btn { background: #4f46e5; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; }
     .btn-light { background: white; color: #4f46e5; border: 1px solid #c7d2fe; }
@@ -99,27 +100,24 @@
       {city:"Charlotte",state:"NC",name:"Charlotte-Ballantyne",address:"13510 Ballantyne Corporate Pl, Charlotte, NC 28277",phone:"704.341.5100"},
       {city:"Charlotte",state:"NC",name:"Charlotte Uptown",address:"620 S Tryon St, Charlotte, NC 28255",phone:"704.339.2000"},
       {city:"Charlotte",state:"NC",name:"Charlotte Fairview",address:"6000 Fairview Rd, Charlotte, NC 28210",phone:"980.282.1700"},
+      {city:"Charlotte",state:"NC",name:"South Park",address:"6000 Fairview Rd, Charlotte, NC 28210",phone:"980.282.1700"},
       {city:"Raleigh",state:"NC",name:"Raleigh",address:"4242 Six Forks Rd, Raleigh, NC 27609",phone:"919.829.2000"},
-      {city:"Greensboro",state:"NC",name:"Greensboro",address:"800 Green Valley Rd, Suite 400, Greensboro, NC 27408",phone:"336.574.8200"},
-      {city:"Winston-Salem",state:"NC",name:"Winston-Salem",address:"380 Knollwood St, Winston-Salem, NC 27103",phone:"336.721.3200"},
       {city:"Wilmington",state:"NC",name:"Wilmington",address:"1123 Military Cutoff Rd, Suite A, Wilmington, NC 28405",phone:"910.256.7700"},
       {city:"Wilson",state:"NC",name:"Wilson",address:"2315 Airport Blvd, Suite B, Wilson, NC 27895",phone:"252.399.2500"},
       {city:"Chapel Hill",state:"NC",name:"Chapel Hill",address:"1414 Raleigh Rd, Chapel Hill, NC 27517",phone:"919.428.2130"},
       {city:"Lake Norman",state:"NC",name:"Lake Norman",address:"8015 West Kenton Circle, Suite 200, Huntersville, NC 28078",phone:"704.987.4141"},
-      {city:"Huntersville",state:"NC",name:"Huntersville",address:"8015 West Kenton Circle, Suite 200, Huntersville, NC 28078",phone:"704.987.4141"},
       {city:"Asheville",state:"NC",name:"Asheville",address:"One North Pack Square, Asheville, NC 28801",phone:"828.258.4452"},
       {city:"Fayetteville",state:"NC",name:"Fayetteville",address:"2550 Ravenhill Drive, Suite 201, Fayetteville, NC 28303",phone:""},
       {city:"Statesville",state:"NC",name:"Statesville",address:"111 W Broad St, Statesville, NC 28677",phone:"704.871.5640"},
-      {city:"Columbia",state:"SC",name:"Columbia",address:"1333 Main St, Columbia, SC 29201",phone:"803.343.6100"},
-      {city:"Charleston",state:"SC",name:"Charleston",address:"17 Lockwood Dr, Charleston, SC 29401",phone:"843.579.6100"},
-      {city:"Greenville",state:"SC",name:"Greenville",address:"55 Beattie Pl, Greenville, SC 29601",phone:"864.239.2400"},
-      {city:"Myrtle Beach",state:"SC",name:"Myrtle Beach",address:"2024 Corporate Centre Dr, Myrtle Beach, SC 29577",phone:"843.946.2000"},
+      {city:"Pinehurst",state:"NC",name:"Pinehurst",address:"110 Applecross Rd, Pinehurst, NC 28374",phone:"910.295.2200"},
+      {city:"Fort Mill",state:"SC",name:"Fort Mill",address:"1620 Williams Rd, Fort Mill, SC 29708",phone:"803.548.3000"},
       {city:"Atlanta",state:"GA",name:"Atlanta Buckhead",address:"3455 Peachtree Rd NE, Atlanta, GA 30326",phone:"404.264.1000"},
+      {city:"Atlanta",state:"GA",name:"Atlanta Galleria",address:"300 Galleria Pkwy SE, Atlanta, GA 30339",phone:"770.858.1200"},
       {city:"Alpharetta",state:"GA",name:"Alpharetta",address:"10000 Avalon Blvd, Alpharetta, GA 30009",phone:"770.360.6000"},
-      {city:"Duluth",state:"GA",name:"Duluth",address:"2170 Satellite Blvd, Duluth, GA 30097",phone:"678.474.1800"},
+      {city:"Sugarloaf",state:"GA",name:"Sugarloaf",address:"2170 Satellite Blvd, Duluth, GA 30097",phone:"678.474.1800"},
       {city:"Gainesville",state:"GA",name:"Gainesville",address:"340 Jesse Jewell Pkwy SE, Gainesville, GA 30501",phone:"770.287.1800"},
-      {city:"Augusta",state:"GA",name:"Augusta",address:"933 Broad St, Augusta, GA 30901",phone:"706.823.4100"},
-      {city:"Columbus",state:"GA",name:"Columbus",address:"7310 North Lake Dr, Columbus, GA 31909",phone:"706.494.5350"}
+      {city:"Rome",state:"GA",name:"Rome",address:"401 Broad Street, Suite 200, Rome, GA 30161",phone:"706.802.4400"},
+      {city:"Peachtree City",state:"GA",name:"Peachtree City",address:"900 Westpark Drive, Peachtree City, GA 30269",phone:"770.632.1000"}
     ];
 
     const teams = [
@@ -130,8 +128,11 @@
       {city:"Atlanta",league:"NFL",name:"Atlanta Falcons",schedule:"https://www.atlantafalcons.com/schedule/"},
       {city:"Atlanta",league:"NBA",name:"Atlanta Hawks",schedule:"https://www.nba.com/hawks/schedule"},
       {city:"Atlanta",league:"MLB",name:"Atlanta Braves",schedule:"https://www.mlb.com/braves/schedule"},
-      {city:"Columbia",league:"MiLB",name:"Columbia Fireflies",schedule:"https://www.milb.com/columbia/schedule"},
-      {city:"Greenville",league:"MiLB",name:"Greenville Drive",schedule:"https://www.milb.com/greenville/schedule"}
+      {city:"Chapel Hill",league:"NCAA",name:"North Carolina Tar Heels",schedule:"https://goheels.com/calendar"},
+      {city:"Raleigh",league:"NCAA",name:"NC State Wolfpack",schedule:"https://gopack.com/calendar"},
+      {city:"Durham",league:"NCAA",name:"Duke Blue Devils",schedule:"https://goduke.com/calendar"},
+      {city:"Atlanta",league:"NCAA",name:"Georgia Tech Yellow Jackets",schedule:"https://ramblinwreck.com/calendar"},
+      {city:"Athens",league:"NCAA",name:"Georgia Bulldogs",schedule:"https://georgiadogs.com/calendar"}
     ];
 
     function getMonday(d){d=new Date(d);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff));}
@@ -141,15 +142,17 @@
 
     let trips = JSON.parse(localStorage.getItem('trips')||'{}');
     let preferredHotels = JSON.parse(localStorage.getItem('preferredHotels')||'{}');
+    let officeNotes = JSON.parse(localStorage.getItem('officeNotes')||'{}');
 
     function saveAll(){
       localStorage.setItem('trips',JSON.stringify(trips));
       localStorage.setItem('preferredHotels',JSON.stringify(preferredHotels));
+      localStorage.setItem('officeNotes',JSON.stringify(officeNotes));
     }
 
     function getDayData(date){
       const key=dateKey(date);
-      if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status:'open'};
+      if(!trips[key]) trips[key]={city:'',officeAddress:'',floor:'',phone:'',hotel:'',hotelAddress:'',notes:'',status:'open'};
       return trips[key];
     }
 
@@ -230,6 +233,8 @@
               <input style="flex:1;" value="${data.officeAddress}" onchange="updateField('${key}','officeAddress',this.value)" placeholder="Street address">
               ${data.officeAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.officeAddress)}" target="_blank">Maps</a>`:''}
             </div>
+            <label>Floor / Suite</label>
+            <input value="${data.floor||''}" onchange="updateField('${key}','floor',this.value)" placeholder="e.g. Suite 200">
             <label>Hotel</label>
             <input list="hotelList" value="${data.hotel}" onchange="updateField('${key}','hotel',this.value)" placeholder="Hotel name">
             <label>Hotel Address</label>
@@ -237,6 +242,8 @@
               <input style="flex:1;" value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
               ${data.hotelAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.hotelAddress)}" target="_blank">Maps</a>`:''}
             </div>
+            <label>Notes</label>
+            <textarea onchange="updateField('${key}','notes',this.value)" placeholder="Parking, access contact, etc.">${data.notes||''}</textarea>
             ${weather?`<div class="weather">Weather: High ${weather.high}°F / Low ${weather.low}°F</div>`:''}
           </div>
           <div id="exp-${key}" class="expand">
@@ -270,7 +277,7 @@
     }
 
     function updateField(key,field,value){
-      if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status:'open'};
+      if(!trips[key]) trips[key]={city:'',officeAddress:'',floor:'',phone:'',hotel:'',hotelAddress:'',notes:'',status:'open'};
       trips[key][field]=value;
 
       if(field==='city'){
@@ -288,13 +295,26 @@
           trips[key].hotel = preferredHotels[cityKey].name || '';
           trips[key].hotelAddress = preferredHotels[cityKey].address || '';
         }
+        if(officeNotes[cityKey]){
+          trips[key].notes = officeNotes[cityKey].notes || '';
+          trips[key].floor = officeNotes[cityKey].floor || '';
+        }
       }
 
-      if(trips[key].city && (field==='hotel' || field==='hotelAddress' || field==='city')){
-        preferredHotels[trips[key].city.toLowerCase()] = {
-          name: trips[key].hotel || '',
-          address: trips[key].hotelAddress || ''
-        };
+      if(trips[key].city){
+        const cityKey = trips[key].city.toLowerCase();
+        if(field==='hotel' || field==='hotelAddress' || field==='city'){
+          preferredHotels[cityKey] = {
+            name: trips[key].hotel || '',
+            address: trips[key].hotelAddress || ''
+          };
+        }
+        if(field==='notes' || field==='floor' || field==='city'){
+          officeNotes[cityKey] = {
+            notes: trips[key].notes || '',
+            floor: trips[key].floor || ''
+          };
+        }
       }
 
       if(trips[key].city || trips[key].hotel) trips[key].status='visit';
@@ -303,7 +323,7 @@
     }
 
     function setStatus(key,status){
-      if(!trips[key]) trips[key]={city:'',officeAddress:'',phone:'',hotel:'',hotelAddress:'',status};
+      if(!trips[key]) trips[key]={city:'',officeAddress:'',floor:'',phone:'',hotel:'',hotelAddress:'',notes:'',status};
       trips[key].status=status;
       saveAll();
       renderWeek();
@@ -368,6 +388,7 @@
           else if(data.city) text+=` – ${data.city}`;
           text+='\n';
           if(data.hotel) text+=`Hotel: ${data.hotel}\n`;
+          if(data.notes) text+=`Notes: ${data.notes}\n`;
           text+='\n';
         }
       }
