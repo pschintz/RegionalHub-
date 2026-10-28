@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f1f5f9; color: #1e2937; }
-    header { background: #4338ca; color: white; padding: 16px; position: sticky; top: 0; z-index: 50; }
+    header { background: #1e1b4b; color: white; padding: 16px; position: sticky; top: 0; z-index: 50; }
     .container { max-width: 480px; margin: 0 auto; padding: 16px 16px 100px; }
     .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; overflow: hidden; }
     .card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; }
@@ -25,8 +25,10 @@
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
     .modal.open { display: flex; }
     .modal-content { background: white; border-radius: 16px; padding: 20px; max-width: 380px; width: 100%; }
-    .link { font-size: 12px; color: #4f46e5; margin-right: 8px; text-decoration: none; }
+    .link { font-size: 12px; color: #4f46e5; margin-right: 8px; text-decoration: none; display: inline-block; margin-bottom: 4px; }
     .maps-btn { display: inline-block; background: #eef2ff; color: #4f46e5; padding: 6px 10px; border-radius: 6px; font-size: 12px; text-decoration: none; margin-top: 6px; }
+    .section-title { font-weight: 600; font-size: 13px; margin: 12px 0 6px; color: #1e2937; }
+    .weather { font-size: 12px; color: #475569; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -38,6 +40,7 @@
         <div style="font-size:12px;opacity:0.8;">NC • SC • GA</div>
       </div>
       <div style="display:flex;gap:8px;">
+        <button class="btn btn-light" onclick="updateWeather()">Update</button>
         <button class="btn btn-light" onclick="toggleCalendar()">Calendar</button>
         <button class="btn btn-light" onclick="showSummary()">Export Week</button>
       </div>
@@ -90,6 +93,7 @@
     const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     let currentMonday = getMonday(new Date());
     let calendarDate = new Date();
+    let weatherCache = {};
 
     const merrillOffices = [
       {city:"Charlotte",state:"NC",name:"Charlotte-Ballantyne",address:"13510 Ballantyne Corporate Pl, Charlotte, NC 28277",phone:"704.341.5100"},
@@ -118,6 +122,18 @@
       {city:"Columbus",state:"GA",name:"Columbus",address:"7310 North Lake Dr, Columbus, GA 31909",phone:"706.494.5350"}
     ];
 
+    const teams = [
+      {city:"Charlotte",league:"NFL",name:"Carolina Panthers",schedule:"https://www.panthers.com/schedule/"},
+      {city:"Charlotte",league:"NBA",name:"Charlotte Hornets",schedule:"https://www.nba.com/hornets/schedule"},
+      {city:"Charlotte",league:"MiLB",name:"Charlotte Knights",schedule:"https://www.milb.com/charlotte-knights/schedule"},
+      {city:"Raleigh",league:"NHL",name:"Carolina Hurricanes",schedule:"https://www.nhl.com/hurricanes/schedule"},
+      {city:"Atlanta",league:"NFL",name:"Atlanta Falcons",schedule:"https://www.atlantafalcons.com/schedule/"},
+      {city:"Atlanta",league:"NBA",name:"Atlanta Hawks",schedule:"https://www.nba.com/hawks/schedule"},
+      {city:"Atlanta",league:"MLB",name:"Atlanta Braves",schedule:"https://www.mlb.com/braves/schedule"},
+      {city:"Columbia",league:"MiLB",name:"Columbia Fireflies",schedule:"https://www.milb.com/columbia/schedule"},
+      {city:"Greenville",league:"MiLB",name:"Greenville Drive",schedule:"https://www.milb.com/greenville/schedule"}
+    ];
+
     function getMonday(d){d=new Date(d);const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff));}
     function formatDate(date){return date.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
     function dateKey(date){return date.toISOString().split('T')[0];}
@@ -144,7 +160,39 @@
         .map(([k])=>k).sort().slice(-5).reverse();
     }
 
-    function renderWeek(){
+    function getTeams(city){
+      if(!city) return [];
+      return teams.filter(t=>t.city.toLowerCase()===city.toLowerCase());
+    }
+
+    async function fetchWeather(city, date){
+      if(!city) return null;
+      const key = city.toLowerCase()+dateKey(date);
+      if(weatherCache[key]) return weatherCache[key];
+      try {
+        const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then(r=>r.json());
+        if(!geo.results?.length) return null;
+        const {latitude, longitude} = geo.results[0];
+        const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&start_date=${dateKey(date)}&end_date=${dateKey(date)}`).then(r=>r.json());
+        if(w.daily){
+          const result = {high:Math.round(w.daily.temperature_2m_max[0]), low:Math.round(w.daily.temperature_2m_min[0])};
+          weatherCache[key]=result;
+          return result;
+        }
+      } catch(e){}
+      return null;
+    }
+
+    async function updateWeather(){
+      for(let i=0;i<7;i++){
+        const date=new Date(currentMonday);date.setDate(date.getDate()+i);
+        const data=getDayData(date);
+        if(data.city) await fetchWeather(data.city, date);
+      }
+      renderWeek();
+    }
+
+    async function renderWeek(){
       const container=document.getElementById('daysContainer');
       container.innerHTML='';
       const start=new Date(currentMonday);
@@ -158,6 +206,8 @@
         const key=dateKey(date);
         const todayLabel=isToday(date)?' <span style="color:#4f46e5;">(Today)</span>':'';
         const lastVisits=getLastVisits(data.city);
+        const cityTeams=getTeams(data.city);
+        const weather = data.city ? await fetchWeather(data.city, date) : null;
 
         let prevHotel='';
         if(i>0){
@@ -187,6 +237,7 @@
               <input style="flex:1;" value="${data.hotelAddress}" onchange="updateField('${key}','hotelAddress',this.value)" placeholder="Street address">
               ${data.hotelAddress?`<a class="maps-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.hotelAddress)}" target="_blank">Maps</a>`:''}
             </div>
+            ${weather?`<div class="weather">Weather: High ${weather.high}° / Low ${weather.low}°</div>`:''}
           </div>
           <div id="exp-${key}" class="expand">
             <div style="display:flex;gap:6px;margin-bottom:12px;font-size:12px;">
@@ -195,8 +246,22 @@
               <button onclick="setStatus('${key}','off')" style="padding:4px 8px;border-radius:6px;border:1px solid #e2e8f0;${data.status==='off'?'background:#bfdbfe':''}">Off</button>
             </div>
             ${lastVisits.length?`<div style="font-size:12px;color:#64748b;margin-bottom:8px;">Last visits: ${lastVisits.map(d=>formatDate(new Date(d+'T12:00:00'))).join(', ')}</div>`:''}
-            ${data.city?`<div style="margin-bottom:8px;"><a class="link" href="https://www.google.com/search?q=restaurants+near+${encodeURIComponent(data.city)}" target="_blank">Restaurants</a><a class="link" href="https://www.google.com/search?q=bbq+near+${encodeURIComponent(data.city)}" target="_blank">BBQ</a><a class="link" href="https://www.google.com/search?q=breweries+near+${encodeURIComponent(data.city)}" target="_blank">Breweries</a></div>`:''}
-            ${prevHotel&&data.officeAddress?`<a class="link" href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotel)}&destination=${encodeURIComponent(data.officeAddress)}" target="_blank">Directions from previous hotel</a>`:''}
+
+            ${cityTeams.length?`<div class="section-title">Sports</div>${cityTeams.map(t=>`<a class="link" href="${t.schedule}" target="_blank">${t.name} (${t.league})</a>`).join('<br>')}`:''}
+
+            ${data.city?`
+              <div class="section-title">Food & Drink</div>
+              <a class="link" href="https://www.google.com/search?q=restaurants+near+${encodeURIComponent(data.city)}" target="_blank">Restaurants</a>
+              <a class="link" href="https://www.google.com/search?q=bbq+near+${encodeURIComponent(data.city)}" target="_blank">BBQ</a>
+              <a class="link" href="https://www.google.com/search?q=steakhouse+near+${encodeURIComponent(data.city)}" target="_blank">Steak</a>
+              <a class="link" href="https://www.google.com/search?q=breweries+near+${encodeURIComponent(data.city)}" target="_blank">Breweries</a>
+              <div class="section-title">Entertainment</div>
+              <a class="link" href="https://www.google.com/search?q=things+to+do+in+${encodeURIComponent(data.city)}" target="_blank">Things to Do</a>
+              <a class="link" href="https://www.google.com/search?q=live+music+${encodeURIComponent(data.city)}+${dateKey(date)}" target="_blank">Live Music</a>
+              <div class="section-title">News</div>
+              <a class="link" href="https://news.google.com/search?q=${encodeURIComponent(data.city)}" target="_blank">Local News</a>
+            `:''}
+            ${prevHotel&&data.officeAddress?`<br><a class="link" href="https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(prevHotel)}&destination=${encodeURIComponent(data.officeAddress)}" target="_blank">Directions from previous hotel</a>`:''}
           </div>
         `;
         container.appendChild(card);
@@ -218,17 +283,14 @@
           trips[key].phone = match.phone;
           trips[key].city = match.city;
         }
-        // Restore preferred hotel
-        const cityKey = (trips[key].city || value).toLowerCase();
-        const pref = preferredHotels[cityKey];
-        if(pref){
-          trips[key].hotel = pref.name || '';
-          trips[key].hotelAddress = pref.address || '';
+        const cityKey = trips[key].city.toLowerCase();
+        if(preferredHotels[cityKey]){
+          trips[key].hotel = preferredHotels[cityKey].name || '';
+          trips[key].hotelAddress = preferredHotels[cityKey].address || '';
         }
       }
 
-      // Always save preferred hotel when hotel name or address changes and city exists
-      if((field==='hotel' || field==='hotelAddress') && trips[key].city){
+      if(trips[key].city && (field==='hotel' || field==='hotelAddress' || field==='city')){
         preferredHotels[trips[key].city.toLowerCase()] = {
           name: trips[key].hotel || '',
           address: trips[key].hotelAddress || ''
